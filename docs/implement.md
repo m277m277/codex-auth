@@ -16,6 +16,7 @@ This document describes how `codex-auth` stores accounts, synchronizes auth file
 - Branch and pull request validation runs live in `.github/workflows/ci.yml` and only execute the three-platform `build-test` matrix.
 - Tag pushes matching `v*` use `.github/workflows/release.yml` to create GitHub Release assets and publish npm packages automatically.
 - npm publishing uses Trusted Publishing from GitHub Actions, so the publish job in `.github/workflows/release.yml` must run on a GitHub-hosted runner with `id-token: write`.
+- `.github/workflows/release.yml` uses `actions/setup-node@v4` with Node 24 for the npm packaging and publish steps so the bundled npm CLI supports Trusted Publishing.
 - Stable tags such as `v0.1.3` publish to npm dist-tag `latest`.
 - Prerelease tags such as `v0.2.0-rc.1` publish to npm dist-tag `next`.
 - GitHub Release assets and npm packages currently target Linux x64, macOS ARM64, and Windows x64.
