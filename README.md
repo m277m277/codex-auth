@@ -323,19 +323,17 @@ Each CPA file is converted in memory to the standard auth snapshot shape before 
 The script is not bundled in the published npm package, so run it from a clone of this repository:
 
 ```shell
-# Convert: ~/.cli-proxy-api → ./converted-tokens
+# Convert: ~/.cli-proxy-api → /tmp/tokens
 python3 scripts/convert_tokens.sh
 
 # Or specify custom directories
 python3 scripts/convert_tokens.sh <source_dir> <output_dir>
 ```
 
-You can choose any writable output directory for the converted files.
-
 Then import and switch:
 
 ```shell
-codex-auth import ./converted-tokens/
+codex-auth import /tmp/tokens/
 # or import the CPA files directly without a conversion step
 codex-auth import --cpa
 codex-auth switch
