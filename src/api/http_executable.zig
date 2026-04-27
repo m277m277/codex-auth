@@ -95,7 +95,5 @@ fn accessPath(path: []const u8) bool {
 }
 
 pub fn logNodeRequirement() void {
-    if (comptime builtin.is_test) return;
-
     std.log.warn("{s}", .{node_requirement_hint});
 }

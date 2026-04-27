@@ -16,8 +16,6 @@ pub fn writeAutoSwitchLogLine(
 }
 
 pub fn emitAutoSwitchLog(from: *const registry.AccountRecord, to: *const registry.AccountRecord) void {
-    if (comptime builtin.is_test) return;
-
     var stderr_buffer: [256]u8 = undefined;
     var writer = std.Io.File.stderr().writer(app_runtime.io(), &stderr_buffer);
     writeAutoSwitchLogLine(&writer.interface, from, to) catch {};
@@ -32,9 +30,7 @@ pub const DaemonLogPriority = enum {
 };
 
 pub fn emitDaemonLog(priority: DaemonLogPriority, comptime fmt: []const u8, args: anytype) void {
-    if (comptime builtin.is_test) {
-        if (priority != .err) return;
-    }
+    _ = priority;
 
     var stderr_buffer: [512]u8 = undefined;
     var writer = std.Io.File.stderr().writer(app_runtime.io(), &stderr_buffer);
@@ -48,9 +44,7 @@ pub fn emitTaggedDaemonLog(
     comptime fmt: []const u8,
     args: anytype,
 ) void {
-    if (comptime builtin.is_test) {
-        if (priority != .err) return;
-    }
+    _ = priority;
 
     var stderr_buffer: [1024]u8 = undefined;
     var writer = std.Io.File.stderr().writer(app_runtime.io(), &stderr_buffer);

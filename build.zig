@@ -85,14 +85,6 @@ pub fn build(b: *std.Build) void {
     };
 
     const test_step = b.step("test", "Run tests");
-    const verbose_tests = b.option(bool, "verbose-tests", "Print every test case while running tests") orelse false;
-    const default_test_runner = if (verbose_tests)
-        b.graph.zig_lib_directory.join(
-            b.allocator,
-            &.{ "compiler", "test_runner.zig" },
-        ) catch @panic("OOM")
-    else
-        "";
     for (test_files) |test_file| {
         const test_module = b.createModule(.{
             .root_source_file = b.path(test_file),
@@ -106,19 +98,10 @@ pub fn build(b: *std.Build) void {
         if (is_windows) {
             linkWindowsTaskSchedulerLibraries(test_module);
         }
-        const test_artifact = if (verbose_tests) b.addTest(.{
-            .root_module = test_module,
-            .test_runner = .{
-                .path = .{ .cwd_relative = default_test_runner },
-                .mode = .simple,
-            },
-        }) else b.addTest(.{
+        const test_artifact = b.addTest(.{
             .root_module = test_module,
         });
         const run_test = b.addRunArtifact(test_artifact);
-        if (verbose_tests) {
-            run_test.stdio = .inherit;
-        }
         run_test.setEnvironmentVariable("CODEX_AUTH_CLI_INTEGRATION_PROJECT_ROOT", b.pathFromRoot("."));
         test_step.dependOn(&run_test.step);
     }
