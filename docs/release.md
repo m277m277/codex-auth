@@ -38,7 +38,8 @@ This document describes the repository's CI, preview package publishing, and tag
    - Push the commit to `origin/main`.
 6. Push the release commit.
    - Release commits use the message `chore: release v<version>`.
-   - The `CI` workflow skips those release-only commits on `main` because the version change is validated locally before pushing and contains only release metadata.
+   - The `CI` workflow classifies push commit messages and skips the expensive build-test matrix when the head commit message starts with `chore: release v`.
+   - Release-only commits are skipped because the version change is validated locally before pushing and contains only release metadata.
    - Do not use the release commit message prefix for non-release changes.
 7. Create and push the release tag.
    - Create an annotated tag named `v<version>`.

@@ -12,9 +12,27 @@ permissions:
   contents: read
 
 jobs:
+  classify:
+    name: Classify commit
+    runs-on: ubuntu-latest
+    outputs:
+      skip_release: ${{ steps.release.outputs.skip_release }}
+    steps:
+      - id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          if [[ "$EVENT_NAME" == "push" && "$HEAD_MESSAGE" == chore:\ release\ v* ]]; then
+            echo "skip_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build-test:
     name: Build & Test (${{ matrix.os }})
-    if: ${{ github.event_name != 'push' || startsWith(github.event.head_commit.message, 'chore: release v') == false }}
+    needs: classify
+    if: ${{ needs.classify.outputs.skip_release != 'true' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
