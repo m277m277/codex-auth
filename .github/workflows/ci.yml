@@ -51,4 +51,4 @@ jobs:
       - name: Zig test
         run: |
           zig version
-          zig build test
+          zig build test -Dverbose-tests=true
