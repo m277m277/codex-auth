@@ -45,6 +45,7 @@ This document describes the repository's CI, preview package publishing, and tag
    - Create an annotated tag named `v<version>`.
    - Push that tag to `origin`.
    - The tag push triggers the release workflow in `.github/workflows/release.yml`.
+   - The generated GitHub Release changelog omits release-only commits whose subject matches `chore: release v<version>`.
    - After a release tag has been pushed, do not reuse that version number. If the tag-driven release workflow later fails and you need another attempt, prepare and publish a new version instead.
 
 ## npm Package Layout

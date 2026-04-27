@@ -233,11 +233,15 @@ jobs:
               compareCommits = (commits.data ?? []).reverse();
             }
 
-            const commitLines = compareCommits.map((commit) => {
-              const shortSha = commit.sha.slice(0, 7);
-              const msg = (commit.commit?.message ?? "").split("\n")[0].trim() || shortSha;
-              return `- ${msg} (${shortSha})`;
-            });
+            const releaseOnlyCommitPattern = /^chore: release v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+            const commitLines = compareCommits
+              .map((commit) => {
+                const shortSha = commit.sha.slice(0, 7);
+                const msg = (commit.commit?.message ?? "").split("\n")[0].trim() || shortSha;
+                return { shortSha, msg };
+              })
+              .filter(({ msg }) => !releaseOnlyCommitPattern.test(msg))
+              .map(({ shortSha, msg }) => `- ${msg} (${shortSha})`);
 
             const lines = [];
             lines.push("## Changelog");

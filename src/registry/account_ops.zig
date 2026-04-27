@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const app_runtime = @import("../core/runtime.zig");
 const account_api = @import("../api/account.zig");
@@ -84,18 +85,18 @@ pub fn syncActiveAccountFromAuthWithImporter(allocator: std.mem.Allocator, codex
     const info = @import("../auth/auth.zig").parseAuthInfo(allocator, auth_path) catch |err| switch (err) {
         error.OutOfMemory => return err,
         else => {
-            std.log.warn("auth.json sync skipped: {s}", .{@errorName(err)});
+            if (!builtin.is_test) std.log.warn("auth.json sync skipped: {s}", .{@errorName(err)});
             return false;
         },
     };
     defer info.deinit(allocator);
 
     const email = info.email orelse {
-        std.log.warn("auth.json missing email; skipping sync", .{});
+        if (!builtin.is_test) std.log.warn("auth.json missing email; skipping sync", .{});
         return false;
     };
     const record_key = info.record_key orelse {
-        std.log.warn("auth.json missing record_key; skipping sync", .{});
+        if (!builtin.is_test) std.log.warn("auth.json missing record_key; skipping sync", .{});
         return false;
     };
 
