@@ -222,20 +222,26 @@ pub fn parseNonSuccessErrorCode(
         .object => |obj| obj,
         else => return null,
     };
-    const error_obj = switch (root_obj.get("error") orelse return null) {
-        .object => |obj| obj,
-        else => return null,
-    };
-    const code = switch (error_obj.get("code") orelse return null) {
-        .string => |value| value,
-        else => return null,
-    };
+    const code = codeFromNestedObject(root_obj, "error") orelse
+        codeFromNestedObject(root_obj, "detail") orelse
+        return null;
     if (code.len == 0) return null;
 
     var out: ResponseErrorCode = .{};
     out.len = @min(code.len, out.bytes.len);
     @memcpy(out.bytes[0..out.len], code[0..out.len]);
     return out;
+}
+
+fn codeFromNestedObject(root_obj: std.json.ObjectMap, key: []const u8) ?[]const u8 {
+    const nested_obj = switch (root_obj.get(key) orelse return null) {
+        .object => |obj| obj,
+        else => return null,
+    };
+    return switch (nested_obj.get("code") orelse return null) {
+        .string => |value| value,
+        else => null,
+    };
 }
 
 pub fn parseUsageResponse(allocator: std.mem.Allocator, body: []const u8) !?registry.RateLimitSnapshot {

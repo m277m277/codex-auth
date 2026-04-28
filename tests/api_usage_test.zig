@@ -129,7 +129,7 @@ test "fetch usage for auth path groups non-chatgpt or incomplete auth as missing
     try std.testing.expect(result.missing_auth);
 }
 
-test "parse non-success usage response extracts error code" {
+test "parse 401 usage error response extracts error code" {
     const body =
         \\{
         \\  "error": {
@@ -144,4 +144,17 @@ test "parse non-success usage response extracts error code" {
     const code = usage_api.parseNonSuccessErrorCode(std.testing.allocator, 401, body) orelse return error.TestExpectedEqual;
     try std.testing.expectEqualStrings("token_invalidated", code.text());
     try std.testing.expect(usage_api.parseNonSuccessErrorCode(std.testing.allocator, 200, body) == null);
+}
+
+test "parse 402 usage error response uses detail code as error code fallback" {
+    const body =
+        \\{
+        \\  "detail": {
+        \\    "code": "deactivated_workspace"
+        \\  }
+        \\}
+    ;
+
+    const code = usage_api.parseNonSuccessErrorCode(std.testing.allocator, 402, body) orelse return error.TestExpectedEqual;
+    try std.testing.expectEqualStrings("deactivated_workspace", code.text());
 }
