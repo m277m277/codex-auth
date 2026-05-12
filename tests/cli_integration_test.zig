@@ -245,12 +245,11 @@ fn writeApiKeyFlowFakeNode(allocator: std.mem.Allocator, dir: fs.Dir, project_ro
             "  echo v22.0.0\n" ++
             "  exit 0\n" ++
             "fi\n" ++
-            "case \"$2\" in\n" ++
-            "  *requests*)\n" ++
+            "payload=$(cat)\n" ++
+            "if [ -n \"$payload\" ]; then\n" ++
             "  printf '%s\\n200\\nok\\n' '{s}'\n" ++
             "  exit 0\n" ++
-            "  ;;\n" ++
-            "esac\n" ++
+            "fi\n" ++
             "printf '%s\\n200\\nok\\n' '{s}'\n",
         .{ batch_body_b64, me_body_b64 },
     );

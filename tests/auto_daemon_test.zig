@@ -22,6 +22,7 @@ const empty_rate_limits_rollout_line = "{" ++
 var daemon_api_fetch_count: usize = 0;
 var candidate_api_fetch_count: usize = 0;
 var daemon_account_name_fetch_count: usize = 0;
+var daemon_account_name_fetch_mutex: std.Io.Mutex = .init;
 var daemon_account_name_fetch_registry_rewrite_codex_home: ?[]const u8 = null;
 var candidate_high_auth_path: ?[]const u8 = null;
 var candidate_low_auth_path: ?[]const u8 = null;
@@ -179,6 +180,9 @@ fn fetchGroupedAccountNamesAfterConcurrentRegistryRewrite(
 }
 
 test "Scenario: Given auto-switch daemon with missing grouped account names when it detects the active scope then it refreshes and saves them" {
+    daemon_account_name_fetch_mutex.lockUncancelable(fs.io());
+    defer daemon_account_name_fetch_mutex.unlock(fs.io());
+
     const gpa = std.testing.allocator;
     var tmp = fs.tmpDir(.{});
     defer tmp.cleanup();
@@ -223,6 +227,9 @@ test "Scenario: Given auto-switch daemon with missing grouped account names when
 }
 
 test "Scenario: Given auto-switch disabled when account names are missing then the daemon skips grouped name refresh" {
+    daemon_account_name_fetch_mutex.lockUncancelable(fs.io());
+    defer daemon_account_name_fetch_mutex.unlock(fs.io());
+
     const gpa = std.testing.allocator;
     var tmp = fs.tmpDir(.{});
     defer tmp.cleanup();
@@ -252,6 +259,9 @@ test "Scenario: Given auto-switch disabled when account names are missing then t
 }
 
 test "Scenario: Given daemon account-name refresh when registry changes during fetch then it merges onto the latest registry" {
+    daemon_account_name_fetch_mutex.lockUncancelable(fs.io());
+    defer daemon_account_name_fetch_mutex.unlock(fs.io());
+
     const gpa = std.testing.allocator;
     var tmp = fs.tmpDir(.{});
     defer tmp.cleanup();
@@ -295,6 +305,9 @@ test "Scenario: Given daemon account-name refresh when registry changes during f
 }
 
 test "Scenario: Given auto-switch daemon with only another user missing grouped account names when it runs then it refreshes that stored scope too" {
+    daemon_account_name_fetch_mutex.lockUncancelable(fs.io());
+    defer daemon_account_name_fetch_mutex.unlock(fs.io());
+
     const gpa = std.testing.allocator;
     var tmp = fs.tmpDir(.{});
     defer tmp.cleanup();
@@ -337,6 +350,9 @@ test "Scenario: Given auto-switch daemon with only another user missing grouped 
 }
 
 test "Scenario: Given auto-switch daemon with grouped team names and only a stored plus snapshot for the same user when it runs then it updates the team records" {
+    daemon_account_name_fetch_mutex.lockUncancelable(fs.io());
+    defer daemon_account_name_fetch_mutex.unlock(fs.io());
+
     const gpa = std.testing.allocator;
     var tmp = fs.tmpDir(.{});
     defer tmp.cleanup();
