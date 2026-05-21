@@ -23,7 +23,7 @@ For the best experience, install the Codex CLI even if you mainly use the VS Cod
 npm install -g @openai/codex
 ```
 
-After that, you can use `codex login`, `codex login --device-auth`, `codex-auth login`, or `codex-auth login --device-auth` to sign in and add accounts more easily.
+After that, you can use  `codex-auth login`, or `codex-auth login --device-auth` to sign in and add accounts more easily.
 
 ## Install
 
