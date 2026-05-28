@@ -24,7 +24,7 @@ Built-in Node environment-proxy support for `fetch()` requires Node.js `22.21.0+
 - headers:
   - `Authorization: Bearer <tokens.access_token>`
   - `ChatGPT-Account-Id: <chatgpt_account_id>`
-  - browser-style `User-Agent` header
+  - `User-Agent: codex-auth/<version>`
 
 ### Account Metadata Refresh
 
@@ -33,7 +33,7 @@ Built-in Node environment-proxy support for `fetch()` requires Node.js `22.21.0+
 - headers:
   - `Authorization: Bearer <tokens.access_token>`
   - `ChatGPT-Account-Id: <chatgpt_account_id>`
-  - browser-style `User-Agent` header
+  - `User-Agent: codex-auth/<version>`
 
 The `accounts/check` response is parsed by `chatgpt_account_id`. `name: null` and `name: ""` are both normalized to `account_name = null`.
 
