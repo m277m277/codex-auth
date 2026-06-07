@@ -142,6 +142,10 @@ fn fakeCodexPowerShellPath() []const u8 {
     return "fake-bin/codex.ps1";
 }
 
+fn fakeCodexBatchPath() []const u8 {
+    return "fake-bin/codex.bat";
+}
+
 fn fakeCodexExePath() []const u8 {
     return "fake-bin/codex.exe";
 }
@@ -226,6 +230,23 @@ fn writeStrictExistingCodexHomeFakeCodex(dir: fs.Dir) !void {
         defer file.close();
         try file.chmod(0o755);
     }
+}
+
+fn writeStrictExistingCodexHomeFakeCodexBatch(dir: fs.Dir) !void {
+    if (builtin.os.tag != .windows) return;
+
+    const script =
+        "@echo off\r\n" ++
+        ">\"%HOME%\\fake-codex-launcher.txt\" echo bat\r\n" ++
+        ">\"%HOME%\\fake-codex-argv.txt\" echo %*\r\n" ++
+        ">\"%HOME%\\fake-codex-home.txt\" echo %CODEX_HOME%\r\n" ++
+        "set \"CODEX_HOME_DIR=%CODEX_HOME%\"\r\n" ++
+        "if \"%CODEX_HOME_DIR%\"==\"\" set \"CODEX_HOME_DIR=%HOME%\\.codex\"\r\n" ++
+        "if not exist \"%CODEX_HOME_DIR%\" exit /b 42\r\n" ++
+        "copy /Y \"%HOME%\\fake-auth.json\" \"%CODEX_HOME_DIR%\\auth.json\" >NUL\r\n" ++
+        "exit /b 0\r\n";
+
+    try dir.writeFile(.{ .sub_path = fakeCodexBatchPath(), .data = script });
 }
 
 fn writeBrokenBareWindowsCodex(dir: fs.Dir) !void {
@@ -998,6 +1019,53 @@ test "Scenario: Given npm-style Windows codex wrappers when running login then t
     const launcher_data = try fixtures.readFileAlloc(gpa, launcher_path);
     defer gpa.free(launcher_data);
     try std.testing.expectEqualStrings("cmd", std.mem.trim(u8, launcher_data, " \r\n"));
+}
+
+test "Scenario: Given only a Windows batch codex wrapper when running login then codex.bat is launched" {
+    if (builtin.os.tag != .windows) return error.SkipZigTest;
+
+    const gpa = std.testing.allocator;
+    const project_root = try projectRootAlloc(gpa);
+    defer gpa.free(project_root);
+    try buildCliBinary(gpa, project_root);
+
+    var tmp = fs.tmpDir(.{});
+    defer tmp.cleanup();
+
+    const home_root = try tmp.dir.realpathAlloc(gpa, ".");
+    defer gpa.free(home_root);
+    try tmp.dir.makePath(".codex");
+    try tmp.dir.makePath("fake-bin");
+
+    const expected_email = "windows-bat@example.com";
+    const fake_auth = try fixtures.authJsonWithEmailPlan(gpa, expected_email, "plus");
+    defer gpa.free(fake_auth);
+    try tmp.dir.writeFile(.{ .sub_path = "fake-auth.json", .data = fake_auth });
+    try writeBrokenBareWindowsCodex(tmp.dir);
+    try writeStrictExistingCodexHomeFakeCodexBatch(tmp.dir);
+
+    const fake_bin_path = try fs.path.join(gpa, &[_][]const u8{ home_root, "fake-bin" });
+    defer gpa.free(fake_bin_path);
+    const path_override = try prependPathEntryAlloc(gpa, fake_bin_path);
+    defer gpa.free(path_override);
+
+    const result = try runCliWithIsolatedHomeAndPath(
+        gpa,
+        project_root,
+        home_root,
+        path_override,
+        &[_][]const u8{ "login", "--device-auth" },
+    );
+    defer gpa.free(result.stdout);
+    defer gpa.free(result.stderr);
+
+    try expectSuccess(result);
+
+    const launcher_path = try fs.path.join(gpa, &[_][]const u8{ home_root, "fake-codex-launcher.txt" });
+    defer gpa.free(launcher_path);
+    const launcher_data = try fixtures.readFileAlloc(gpa, launcher_path);
+    defer gpa.free(launcher_data);
+    try std.testing.expectEqualStrings("bat", std.mem.trim(u8, launcher_data, " \r\n"));
 }
 
 test "Scenario: Given only a PowerShell Windows codex wrapper when running login then codex.ps1 is launched" {

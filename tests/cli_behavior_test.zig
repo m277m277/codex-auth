@@ -817,7 +817,7 @@ test "Scenario: Given PowerShell is missing for the codex ps1 launcher when rend
 
     const hint = aw.written();
     try std.testing.expect(std.mem.indexOf(u8, hint, "the `codex.ps1` launcher requires PowerShell") != null);
-    try std.testing.expect(std.mem.indexOf(u8, hint, "Install PowerShell, or use a Codex CLI installation that provides `codex.exe` or `codex.cmd`, then retry your command.") != null);
+    try std.testing.expect(std.mem.indexOf(u8, hint, "Install PowerShell, or use a Codex CLI installation that provides `codex.exe`, `codex.cmd`, or `codex.bat`, then retry your command.") != null);
     try std.testing.expect(std.mem.indexOf(u8, hint, "the `codex` executable was not found in your PATH.") == null);
 }
 
@@ -848,6 +848,7 @@ test "Scenario: Given winget and npm Windows launchers when resolving then PATH 
     try tmp.dir.writeFile(.{ .sub_path = "winget-bin/codex.exe", .data = "" });
     try tmp.dir.writeFile(.{ .sub_path = "npm-bin/codex", .data = "#!/bin/sh\nexit 1\n" });
     try tmp.dir.writeFile(.{ .sub_path = "npm-bin/codex.cmd", .data = "@echo off\r\nexit /b 0\r\n" });
+    try tmp.dir.writeFile(.{ .sub_path = "npm-bin/codex.bat", .data = "@echo off\r\nexit /b 0\r\n" });
     try tmp.dir.writeFile(.{ .sub_path = "npm-bin/codex.ps1", .data = "exit 0\n" });
     const root_dir = try tmp.dir.realpathAlloc(gpa, ".");
     defer gpa.free(root_dir);
@@ -867,7 +868,7 @@ test "Scenario: Given winget and npm Windows launchers when resolving then PATH 
     try std.testing.expect(std.mem.endsWith(u8, cmd_first.path, "codex.cmd"));
 }
 
-test "Scenario: Given exe cmd and ps1 in one Windows directory when resolving then the fixed launcher priority wins" {
+test "Scenario: Given exe cmd bat and ps1 in one Windows directory when resolving then the fixed launcher priority wins" {
     const gpa = std.testing.allocator;
     var tmp = fs.tmpDir(.{});
     defer tmp.cleanup();
@@ -875,6 +876,7 @@ test "Scenario: Given exe cmd and ps1 in one Windows directory when resolving th
     try tmp.dir.makePath("mixed-bin");
     try tmp.dir.writeFile(.{ .sub_path = "mixed-bin/codex.exe", .data = "" });
     try tmp.dir.writeFile(.{ .sub_path = "mixed-bin/codex.cmd", .data = "@echo off\r\nexit /b 0\r\n" });
+    try tmp.dir.writeFile(.{ .sub_path = "mixed-bin/codex.bat", .data = "@echo off\r\nexit /b 0\r\n" });
     try tmp.dir.writeFile(.{ .sub_path = "mixed-bin/codex.ps1", .data = "exit 0\n" });
     const root_dir = try tmp.dir.realpathAlloc(gpa, ".");
     defer gpa.free(root_dir);
@@ -885,6 +887,27 @@ test "Scenario: Given exe cmd and ps1 in one Windows directory when resolving th
     defer resolved.deinit(gpa);
     try std.testing.expectEqual(cli.login.WindowsCodexPathKind.exe, resolved.kind);
     try std.testing.expect(std.mem.endsWith(u8, resolved.path, "codex.exe"));
+}
+
+test "Scenario: Given only a batch Windows launcher when resolving then bat is used before ps1" {
+    const gpa = std.testing.allocator;
+    var tmp = fs.tmpDir(.{});
+    defer tmp.cleanup();
+
+    try tmp.dir.makePath("npm-bin");
+    try tmp.dir.writeFile(.{ .sub_path = "npm-bin/codex", .data = "#!/bin/sh\nexit 1\n" });
+    try tmp.dir.writeFile(.{ .sub_path = "npm-bin/codex.bat", .data = "@echo off\r\nexit /b 0\r\n" });
+    try tmp.dir.writeFile(.{ .sub_path = "npm-bin/codex.ps1", .data = "exit 0\n" });
+
+    const root_dir = try tmp.dir.realpathAlloc(gpa, ".");
+    defer gpa.free(root_dir);
+    const npm_dir = try std.fs.path.join(gpa, &[_][]const u8{ root_dir, "npm-bin" });
+    defer gpa.free(npm_dir);
+
+    var resolved = (try cli.login.resolveWindowsCodexPathEntriesAlloc(gpa, &[_][]const u8{npm_dir})) orelse return error.TestUnexpectedResult;
+    defer resolved.deinit(gpa);
+    try std.testing.expectEqual(cli.login.WindowsCodexPathKind.bat, resolved.kind);
+    try std.testing.expect(std.mem.endsWith(u8, resolved.path, "codex.bat"));
 }
 
 test "Scenario: Given only the bare npm shell launcher on Windows when resolving then it is ignored" {

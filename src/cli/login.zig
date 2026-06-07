@@ -10,6 +10,7 @@ const output = @import("output.zig");
 pub const WindowsCodexPathKind = enum {
     exe,
     cmd,
+    bat,
     ps1,
 };
 
@@ -109,6 +110,7 @@ fn windowsCodexCandidateName(kind: WindowsCodexPathKind) []const u8 {
     return switch (kind) {
         .exe => "codex.exe",
         .cmd => "codex.cmd",
+        .bat => "codex.bat",
         .ps1 => "codex.ps1",
     };
 }
@@ -132,6 +134,7 @@ fn appendWindowsCodexPathEntryCandidatesAlloc(
 ) !void {
     try appendWindowsCodexPathCandidateIfAvailable(allocator, native_candidates, entry, .exe);
     try appendWindowsCodexPathCandidateIfAvailable(allocator, native_candidates, entry, .cmd);
+    try appendWindowsCodexPathCandidateIfAvailable(allocator, native_candidates, entry, .bat);
     try appendWindowsCodexPathCandidateIfAvailable(allocator, ps1_candidates, entry, .ps1);
 }
 
@@ -254,7 +257,7 @@ fn buildWindowsCodexLaunchAlloc(
     opts: types.LoginOptions,
 ) !CodexLaunch {
     switch (resolved.kind) {
-        .exe, .cmd => {
+        .exe, .cmd, .bat => {
             var launch = CodexLaunch{};
             launch.argv_storage[0] = resolved.path;
             launch.argv_storage[1] = "login";
@@ -372,7 +375,7 @@ fn shouldRetryWindowsCodexLaunch(err: std.process.SpawnError, kind: WindowsCodex
     return switch (err) {
         error.FileNotFound => true,
         error.AccessDenied => switch (kind) {
-            .exe, .cmd, .ps1 => true,
+            .exe, .cmd, .bat, .ps1 => true,
         },
         else => false,
     };

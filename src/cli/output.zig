@@ -460,7 +460,7 @@ pub fn writeCodexLoginLaunchFailureHintTo(out: *std.Io.Writer, err_name: []const
     } else if (std.mem.eql(u8, err_name, "PowerShellNotFound")) {
         try out.writeAll(" the `codex.ps1` launcher requires PowerShell, but neither `powershell.exe` nor `pwsh.exe` was found in your PATH.\n\n");
         try writeHintPrefixTo(out, use_color);
-        try out.writeAll(" Install PowerShell, or use a Codex CLI installation that provides `codex.exe` or `codex.cmd`, then retry your command.\n");
+        try out.writeAll(" Install PowerShell, or use a Codex CLI installation that provides `codex.exe`, `codex.cmd`, or `codex.bat`, then retry your command.\n");
     } else {
         try out.writeAll(" failed to launch the `codex login` process.\n\n");
         try writeHintPrefixTo(out, use_color);
